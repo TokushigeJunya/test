@@ -1,0 +1,101 @@
+・vpc
+Tokushige-vpc-01
+IP10.0.0.0/21
+リージョン 大阪 社用は東京
+
+・サブネット
+Tokushige-web-subnet-01
+IP10.0.0.0/24
+アベイラビリティゾーン ap-northeast-3a 社用はap-northeast-1a
+Tokushige-web-rt-01に関連付け
+
+Tokushige-db-subnet-01
+IP10.0.2.0/24
+アベイラビリティゾーン ap-northeast-3a 社用はap-northeast-1a
+Tokushige-web-rt-01に関連付け
+
+Tokushige-db-subnet-02
+IP10.0.4.0/24
+アベイラビリティゾーン ap-northeast-3b 社用はap-northeast-1c
+Tokushige-web-rt-01に関連付け
+
+Tokushige-web-subnet-02
+IP10.0.6.0/24
+アベイラビリティゾーン ap-northeast-3c 社用はap-northeast-1d
+Tokushige-web-rt-01に関連付け
+
+・インターネットゲートウェイ
+Tokushige-internet-gateway-01
+Tokushige-vpcにアタッチ
+
+・ルートテーブル
+Tokushige-web-rt-01
+ルート0.0.0.0/0 Tokushige-internet-gateway
+
+・EC2
+Tokushige-web-server-01
+Tokushige-web-subnet-01に設置
+
+Tokushige-web-server-02
+Tokushige-web-AMIを基に作成
+Tokushige-web-subnet-02に設置
+
+・キーペア
+Tokushige-key 社用はTokushige-key-01
+
+・セキュリティグループ
+Tokushige-web-sg-01 
+インバウンドルール SSH 0.0.0.0
+                　  TCP port8080 0.0.0.0 ロードバランサー作成後 TCP port8080 Tokushige-alb-sg-01 に変更
+Tokushige-web-server-01,Tokushige-web-server-02に適用
+
+Tokushige-db-sg-01
+インバウンドルール postgres Tokushige-web-sg-01
+Tokushige-db-01に適用
+
+Tokushige-alb-sg-01
+インバウンドルール HTTP 0.0.0.0
+
+・サブネットグループ
+Tokushige-subet-group-01
+Tokushige-db-subnet-01,Tokushige-db-subnet-02を含む
+
+・RDS
+Tokushige-db-01
+マスターユーザ postgres
+パスワード =Jun2718
+アベイラビリティゾーン ap-northeast-3a 社用はap-northeast-1a
+エンドポイント tokushige-db-01.cvieac0kkv4n.ap-northeast-3.rds.amazonaws.com
+社用はtokushige-db-01.crus6ikkckl3.ap-northeast-1.rds.amazonaws.com
+
+・AMI
+Tokushige-web-AMI-01
+Tokushige-web-server-01を基に作成
+
+・ターゲットグループ
+Tokushige-tg-01
+ターゲット Tokushige-web-server-01,Tokushige-web-server-02
+ポート HTTP 8080
+ヘルスチェックパス /actuator/health
+
+・ロードバランサー
+Tokushige-web-alb-01
+ネットワークマッピング Tokushige-web-subnet-01,Tokushige-web-subnet-02
+セキュリティグループ Tokushige-alb-sg-01
+リスナー HTTP 80 デフォルトアクション Tokushige-tg-01
+スティッキーセッションを有効化する
+
+・起動テンプレート
+Tokushige-web-template-01
+Tokushige-web-AMI-01を基に作成
+ユーザデータ
+#!/bin/bash
+# Update the package index
+yum update -y
+# Switch to ec2-user and execute commands
+su - ec2-user -c "cd /home/ec2-user/playground/target && nohup java -jar playground-0.0.1-SNAPSHOT.jar &"
+
+・Auto Scaling
+Tokushige-auto-scaling-01
+バージョン Latest(1)
+サブネット Tokushige-web-subnet-01,Tokushige-web-subnet-02

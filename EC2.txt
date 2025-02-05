@@ -1,0 +1,36 @@
+sudo yum update
+
+DB接続
+sudo yum install -y postgresql16
+psql --version
+psql -U postgres -h tokushige-db-01.cvieac0kkv4n.ap-northeast-3.rds.amazonaws.com
+
+java,maven設定
+sudo yum install -y java-21-amazon-corretto
+sudo yum install -y maven
+echo "export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto" >> ~/.bashrc
+echo "export PATH=$JAVA_HOME/bin:$PATH" >> ~/.bashrc
+echo "export MAVEN_HOME=/usr/share/maven" >> ~/.bashrc
+echo "export PATH=$MAVEN_HOME/bin:$PATH" >> ~/.bashrc
+source ~/.bashrc
+
+DB設定 環境変数
+echo "export SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver" >> ~/.bashrc
+echo "export SPRING_DATASOURCE_URL=jdbc:postgresql://tokushige-db-01.cvieac0kkv4n.ap-northeast-3.rds.amazonaws.com >>~/.bashrc
+echo "export SPRING_DATASOURCE_USERNAME=postgres" >> ~/.bashrc
+echo "export SPRING_DATASOURCE_PASSWORD='=Jun2718'" >> ~/.bashrc
+source ~/.bashrc
+
+ソースコードインストール
+sudo yum install -y git
+git clone https://github.com/TokushigeJunya/playground
+cd playground
+mvn clean package
+
+jar実行
+cd target
+nohup java -jar playground-0.0.1-SNAPSHOT.jar &
+
+停止
+ps aux
+kill [id]
