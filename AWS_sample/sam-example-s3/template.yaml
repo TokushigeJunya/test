@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-example-s3
+
+  Sample SAM Template for sam-example-s3
+
+Globals:
+  Function:
+    Timeout: 120
+    Environment:
+      Variables:
+        OUTPUTBUCKET: example-write-tokushige-01
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Role: arn:aws:iam::216989123932:role/Tokushige-lambda-role
+      Layers:
+        - !Ref MyLayerPyminizip
+      Events:
+        s3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref ReadBucket
+            Events:
+              - s3:ObjectCreated:*
+
+  S3Permission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref HelloWorldFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub arn:aws:s3:::example-read-tokushige-01
+
+  MyLayerPyminizip:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: 'mylayer-pyminizip/'
+      CompatibleRuntimes:
+        - python3.13
+    Metadata:
+      BuildMethod: python3.13
+
+  ReadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: example-read-tokushige-01
+
+  WriteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: example-write-tokushige-01
+
+Outputs:
+  MyFunctionArn:
+    Value: !GetAtt HelloWorldFunction.Arn
