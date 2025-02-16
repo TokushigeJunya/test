@@ -8,6 +8,7 @@ Description: >
 Globals:
   Function:
     Timeout: 120
+    #環境変数の設定
     Environment:
       Variables:
         OUTPUTBUCKET: example-write-tokushige-01
@@ -21,9 +22,12 @@ Resources:
       Runtime: python3.13
       Architectures:
         - x86_64
+      #ロールの設定
       Role: arn:aws:iam::216989123932:role/Tokushige-lambda-role
+      #レイヤーの参照
       Layers:
         - !Ref MyLayerPyminizip
+      #イベントの設定
       Events:
         s3Event:
           Type: S3
@@ -32,6 +36,7 @@ Resources:
             Events:
               - s3:ObjectCreated:*
 
+  #パーミッションの追加
   S3Permission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -41,6 +46,7 @@ Resources:
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !Sub arn:aws:s3:::example-read-tokushige-01
 
+  #レイヤーの作成
   MyLayerPyminizip:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -50,6 +56,7 @@ Resources:
     Metadata:
       BuildMethod: python3.13
 
+  #S3バケットの作成
   ReadBucket:
     Type: AWS::S3::Bucket
     Properties:
